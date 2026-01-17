@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Garud: Cosmic Recon | IAF Future Vision</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Orbitron', sans-serif; color: white; }
+        
+        /* Modern UI Screens */
+        .screen { 
+            position: fixed; inset: 0; background: radial-gradient(circle at center, #0a0a1a 0%, #000 100%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            z-index: 100; text-align: center; padding: 20px; transition: 0.5s ease-in-out;
+        }
+        .hidden { display: none !important; opacity: 0; }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 242, 255, 0.15);
+            border-radius: 20px;
+            padding: 35px;
+            max-width: 650px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .mission-desc {
+            font-size: 14px; line-height: 1.8; color: #b0c4de;
+            margin-bottom: 25px; text-align: justify;
+            border-left: 4px solid #00f2ff; padding-left: 20px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Animated Interactive Buttons */
+        .nav-btn {
+            background: linear-gradient(45deg, #00f2ff, #0077ff);
+            color: black; border: none; padding: 18px 55px; 
+            font-family: 'Orbitron'; font-weight: 900; cursor: pointer; 
+            margin-top: 15px; border-radius: 4px;
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.4); 
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
+            text-transform: uppercase; letter-spacing: 2px;
+        }
+        .nav-btn:hover { 
+            transform: translateY(-5px) scale(1.05); 
+            box-shadow: 0 10px 30px rgba(0, 242, 255, 0.6);
+            background: #fff;
+        }
+
+        /* Countdown UI Overlay */
+        #countdown-screen {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.9);
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 200;
+        }
+        #countdown-timer { font-size: 150px; font-weight: 900; color: #00f2ff; text-shadow: 0 0 30px #00f2ff; }
+        .alert-sub-msg { font-size: 24px; letter-spacing: 5px; margin-bottom: 20px; text-transform: uppercase; color: #fff; }
+
+        /* Signal Lost UI - Optimized Classic */
+        #pause-screen { 
+            position: fixed; inset: 0; background: rgba(30, 0, 0, 0.85); 
+            display: none; flex-direction: column; align-items: center; justify-content: center; 
+            z-index: 150; border: 15px solid rgba(255, 0, 0, 0.6); 
+        }
+        .pause-msg { color: #ff3333; font-size: 45px; font-weight: 900; animation: blink 0.6s infinite; text-shadow: 0 0 25px red; }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* HUD Styling */
+        #video-container { 
+            position: absolute; bottom: 30px; left: 30px; width: 250px; height: 185px; 
+            border: 2px solid rgba(0, 242, 255, 0.5); border-radius: 12px; 
+            overflow: hidden; transform: scaleX(-1); z-index: 20; 
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
+        }
+        #webcam { width: 100%; height: 100%; object-fit: cover; position: absolute; }
+        #hand-canvas { width: 100%; height: 100%; position: absolute; z-index: 21; pointer-events: none; }
+        #pilot-tag { 
+            position: absolute; bottom: 12px; right: 12px; transform: scaleX(-1); 
+            background: #00f2ff; color: black; padding: 4px 12px; 
+            font-size: 10px; font-weight: 900; border-radius: 4px; z-index: 22; 
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        #hud { 
+            position: absolute; top: 25px; width: 100%; display: none; 
+            justify-content: center; gap: 20px; pointer-events: none; z-index: 10; 
+        }
+        .stat-panel { 
+            background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.3); padding: 12px 25px; 
+            border-radius: 10px; font-size: 14px; letter-spacing: 1px;
+        }
+        
+        /* Auth & Mode Page Updates */
+        .auth-box { width: 420px; padding: 35px; border: 1px solid rgba(0, 242, 255, 0.3); }
+        #pilot-name-input { 
+            width: 90%; background: rgba(0,0,0,0.4); border: 2px solid rgba(0, 242, 255, 0.2); 
+            border-radius: 10px; padding: 15px; color: #00f2ff; font-family: 'Orbitron'; 
+            font-size: 18px; text-align: center; outline: none; margin: 15px 0;
+            transition: 0.3s;
+        }
+        #pilot-name-input:focus { border-color: #00f2ff; background: rgba(0,0,0,0.6); box-shadow: 0 0 15px rgba(0,242,255,0.3); }
+        
+        .mode-container { display: flex; gap: 20px; margin: 25px 0; }
+        .mode-card { 
+            flex: 1; padding: 20px; border-radius: 15px; cursor: pointer; 
+            border: 2px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.02);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); 
+        }
+        .mode-card:hover { transform: translateY(-8px); background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.5); }
+        .mode-card.active { transform: scale(1.1); background: rgba(255,255,255,0.1); border-color: currentColor; box-shadow: 0 5px 20px rgba(0,0,0,0.4); }
+
+        /* Custom Range Slider */
+       #color-slider { 
+    appearance: none;            /* Standard Property */
+    -webkit-appearance: none;    /* Chrome/Safari ke liye */
+    -moz-appearance: none;       /* Firefox ke liye */
+    width: 100%; 
+    height: 14px; 
+    border-radius: 10px; 
+    background: linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000); 
+    outline: none; 
+    cursor: pointer; 
+    margin-top: 15px; 
+    border: 1px solid rgba(255,255,255,0.2);
+}
+        #color-slider::-webkit-slider-thumb { 
+            -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; 
+            background: #fff; border: 3px solid #000; cursor: pointer; box-shadow: 0 0 10px white;
+        }
+    </style>
+</head>
+<body>
+
+<div id="page-1" class="screen">
+    <h1 style="color: #00f2ff; font-size: 38px; letter-spacing: 8px; text-shadow: 0 0 20px rgba(0, 242, 255, 0.6); margin-bottom: 30px;">GARUD: COSMIC RECON</h1>
+    <div class="glass-panel">
+        <div class="mission-desc">
+            Since 1932, the Indian Air Force has guarded our skies with the motto <b>"Nabhah Sprusham Deeptam"</b>. 
+            As we move into the era of Space Command, the elite <b>Garud Special Forces</b> are now the first line 
+            of defense in the final frontier. This simulation visualizes our future—where AI-linked neural 
+            interfaces allow pilots to control hyper-velocity stealth craft with a mere wave of a hand.
+        </div>
+        <div style="font-size: 13px; color: #00f2ff; letter-spacing: 2px; font-weight: bold; text-transform: uppercase;">
+            Control: Open Palm (Navigate) | Closed Fist (Engage Thrust)
+        </div>
+    </div>
+    <button class="nav-btn" onclick="nextPage(2)">INITIALIZE SYSTEMS</button>
+</div>
+
+<div id="page-2" class="screen hidden">
+    <h1 style="letter-spacing: 5px; margin-bottom: 30px;">INTENSITY PROTOCOL</h1>
+    <div class="mode-container" style="width: 500px;">
+        <div id="card-easy" class="mode-card active" style="color:#00ffbb" onclick="pickMode('easy')">
+            <h3 style="margin: 0;">EASY</h3>
+            <p style="font-size: 10px; color: #ccc; margin-top: 10px;">RECON MODE</p>
+        </div>
+        <div id="card-medium" class="mode-card" style="color:#ffee00" onclick="pickMode('medium')">
+            <h3 style="margin: 0;">MED</h3>
+            <p style="font-size: 10px; color: #ccc; margin-top: 10px;">COMBAT MODE</p>
+        </div>
+        <div id="card-hard" class="mode-card" style="color:#ff4444" onclick="pickMode('hard')">
+            <h3 style="margin: 0;">HARD</h3>
+            <p style="font-size: 10px; color: #ccc; margin-top: 10px;">ELITE OPS</p>
+        </div>
+    </div>
+    <button class="nav-btn" onclick="nextPage(3)">SET PARAMETERS</button>
+</div>
+
+<div id="page-3" class="screen hidden">
+    <h2 style="color: #00f2ff; letter-spacing: 6px; margin-bottom: 30px;">PILOT AUTHENTICATION</h2>
+    <div class="auth-box glass-panel">
+        <div style="font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 3px;">Callsign Registration</div>
+        <input type="text" id="pilot-name-input" placeholder="GARUD-01" maxlength="12">
+        <div style="margin-top: 30px;">
+            <div style="font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 15px;">Hull Sync Spectrum</div>
+            <input type="range" id="color-slider" min="0" max="360" value="180" oninput="updateHullColor(this.value)">
+        </div>
+    </div>
+    <button class="nav-btn" onclick="finalCheck()">LAUNCH MISSION</button>
+</div>
+
+<div id="countdown-screen">
+    <div class="alert-sub-msg" id="countdown-alert">ARE YOU READY?</div>
+    <div id="countdown-timer">3</div>
+</div>
+
+<div id="hud">
+    <div class="stat-panel">THRUST <span id="thrust-ui" style="color:#00f2ff; font-weight: 900; margin-left: 10px;">0%</span></div>
+    <div class="stat-panel">SCORE <span id="score-ui" style="color:#00f2ff; font-weight: 900; margin-left: 10px;">0</span></div>
+    <div class="stat-panel">HP <span id="hp-ui" style="color:#ff3333; font-weight: 900; margin-left: 10px;">100</span></div>
+</div>
+
+<div id="pause-screen">
+    <h1 class="pause-msg">⚠️ SIGNAL LOST ⚠️</h1>
+    <p style="letter-spacing: 5px; font-weight: bold; margin-top: 10px;">RE-ESTABLISH NEURAL LINK</p>
+</div>
+
+<div id="video-container">
+    <video id="webcam" autoplay playsinline></video>
+    <canvas id="hand-canvas"></canvas>
+    <div id="pilot-tag">PILOT: GUEST</div>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+
+    const state = {
+        speed: 0, targetSpeed: 0.6, targetX: 0, targetY: 5, curX: 0, curY: 5,
+        score: 0, hp: 100, gameActive: false, handDetected: false,
+        difficulty: 'easy', shipColor: 0x00f2ff,
+        rings: [], mines: [], repairs: []
+    };
+
+    let scene, camera, renderer, jet, bodyMesh, engineLight, starField, handLandmarker;
+    const ringColors = [0x00f2ff, 0xff00ff, 0xffff00, 0x00ff00, 0xffffff];
+    const video = document.getElementById('webcam');
+    const canvas = document.getElementById('hand-canvas');
+    const ctx = canvas.getContext('2d');
+
+    // UI Logic
+    window.nextPage = (num) => {
+        document.querySelectorAll('.screen').forEach(s => {
+            s.classList.add('hidden');
+        });
+        document.getElementById(`page-${num}`).classList.remove('hidden');
+    };
+
+    window.pickMode = (m) => {
+        state.difficulty = m;
+        document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
+        document.getElementById(`card-${m}`).classList.add('active');
+    };
+
+    window.updateHullColor = (hue) => {
+        state.shipColor = new THREE.Color(`hsl(${hue}, 100%, 50%)`).getHex();
+        if(bodyMesh) bodyMesh.material.color.setHex(state.shipColor);
+    };
+
+    window.finalCheck = () => {
+        const name = document.getElementById('pilot-name-input').value || "GARUD-01";
+        document.getElementById('pilot-tag').innerText = "PILOT: " + name;
+        
+        // --- 3 Second Countdown Logic ---
+        document.getElementById('page-3').classList.add('hidden');
+        const countdownScreen = document.getElementById('countdown-screen');
+        const countdownTimer = document.getElementById('countdown-timer');
+        const countdownAlert = document.getElementById('countdown-alert');
+        
+        countdownAlert.innerText = `ARE YOU READY ${name.toUpperCase()}?`;
+        countdownScreen.style.display = 'flex';
+        
+        let count = 3;
+        countdownTimer.innerText = count;
+
+        const timerInterval = setInterval(() => {
+            count--;
+            if (count > 0) {
+                countdownTimer.innerText = count;
+            } else {
+                clearInterval(timerInterval);
+                countdownScreen.style.display = 'none';
+                
+                // --- Actual Game Launch ---
+                document.getElementById('hud').style.display = 'flex';
+                let mCount = state.difficulty === 'easy' ? 2 : (state.difficulty === 'medium' ? 4 : 8);
+                spawnEntities(mCount, 2);
+                state.gameActive = true;
+            }
+        }, 1000);
+    };
+
+    // --- REMAINDING CORE LOGIC (AI, THREE.JS, ANIMATION) ---
+    async function init() {
+        scene = new THREE.Scene();
+        scene.fog = new THREE.Fog(0x000000, 100, 450);
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 8, 25);
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+        createNebula(); createGhostJet(); await setupAI(); animate();
+    }
+
+    function createGhostJet() {
+        jet = new THREE.Group();
+        bodyMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.8, 6, 4), new THREE.MeshPhongMaterial({color: state.shipColor, flatShading: true}));
+        bodyMesh.rotation.x = Math.PI/2;
+        const wings = new THREE.Mesh(new THREE.BoxGeometry(10, 0.1, 2.5), new THREE.MeshPhongMaterial({color: 0x333333}));
+        engineLight = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.3, 1, 12), new THREE.MeshBasicMaterial({color: 0x00f2ff}));
+        engineLight.rotation.x = Math.PI/2; engineLight.position.z = 3;
+        jet.add(bodyMesh, wings, engineLight); scene.add(jet);
+    }
+
+    function spawnEntities(mCount, rCount) {
+        for(let i=0; i<4; i++) {
+            const r = new THREE.Mesh(new THREE.TorusGeometry(3.5, 0.2, 12, 32), new THREE.MeshBasicMaterial({ color: ringColors[i % 5], wireframe: true }));
+            resetPos(r, -150 - (i*80)); state.rings.push(r); scene.add(r);
+        }
+        for(let i=0; i<mCount; i++) {
+            const m = new THREE.Mesh(new THREE.IcosahedronGeometry(2, 0), new THREE.MeshStandardMaterial({color: 0xff0000}));
+            resetPos(m, -100 - (i*60)); state.mines.push(m); scene.add(m);
+        }
+        for(let i=0; i<rCount; i++) {
+            const k = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), new THREE.MeshStandardMaterial({color: 0x00ff00}));
+            resetPos(k, -250); state.repairs.push(k); scene.add(k);
+        }
+    }
+
+    function resetPos(obj, z = -350) { obj.position.set((Math.random() - 0.5) * 36, Math.random() * 12 + 4, z); }
+
+    function createNebula() {
+        const geo = new THREE.BufferGeometry();
+        const pos = new Float32Array(3000 * 3);
+        for(let i=0; i<9000; i++) pos[i] = (Math.random()-0.5) * 800;
+        geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        starField = new THREE.Points(geo, new THREE.PointsMaterial({size: 0.7, color: 0xffffff}));
+        scene.add(starField);
+    }
+
+    async function setupAI() {
+        const vision = await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3");
+        const fileset = await vision.FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
+        handLandmarker = await vision.HandLandmarker.createFromOptions(fileset, {
+            baseOptions: { modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`, delegate: "GPU" },
+            runningMode: "VIDEO", numHands: 1, minHandDetectionConfidence: 0.5
+        });
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+        video.srcObject = stream;
+        video.onloadedmetadata = () => { canvas.width = 640; canvas.height = 480; };
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        if(!state.gameActive) return;
+
+        if (handLandmarker && video.readyState === 4) {
+            const res = handLandmarker.detectForVideo(video, performance.now());
+            if (res.landmarks && res.landmarks.length > 0) {
+                state.handDetected = true;
+                document.getElementById('pause-screen').style.display = "none";
+                const h = res.landmarks[0];
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "#00f2ff";
+                h.forEach(p => { ctx.beginPath(); ctx.arc(p.x * canvas.width, p.y * canvas.height, 3, 0, 7); ctx.fill(); });
+                state.targetX = (0.5 - h[0].x) * 55;
+                state.targetY = (0.5 - h[0].y) * 35 + 8;
+                state.targetSpeed = (Math.hypot(h[8].x - h[5].x, h[8].y - h[5].y) < 0.1) ? 4.5 : 0.7; 
+            } else {
+                state.handDetected = false;
+                document.getElementById('pause-screen').style.display = "flex";
+            }
+        }
+
+        if (state.handDetected) {
+            state.curX = THREE.MathUtils.lerp(state.curX, state.targetX, 0.1);
+            state.curY = THREE.MathUtils.lerp(state.curY, state.targetY, 0.1);
+            state.speed = THREE.MathUtils.lerp(state.speed, state.targetSpeed, 0.05);
+            jet.position.set(state.curX, state.curY, 0);
+            jet.rotation.z = -(state.targetX - state.curX) * 0.25;
+            starField.position.z += state.speed * 2;
+            if(starField.position.z > 300) starField.position.z = 0;
+            updateEntities(state.rings, 5, (r) => { state.score += 100; engineLight.material.color.copy(r.material.color); });
+            updateEntities(state.mines, 4, () => { state.hp = Math.max(0, state.hp - 10); flashRed(); });
+            updateEntities(state.repairs, 4, () => { state.hp = Math.min(100, state.hp + 20); });
+            document.getElementById('score-ui').innerText = state.score;
+            document.getElementById('hp-ui').innerText = state.hp;
+            document.getElementById('thrust-ui').innerText = Math.floor(state.speed * 100) + "%";
+        }
+        renderer.render(scene, camera);
+    }
+
+    function updateEntities(list, dist, cb) {
+        list.forEach(item => {
+            item.position.z += state.speed * 2.5;
+            if(jet.position.distanceTo(item.position) < dist) { cb(item); resetPos(item); }
+            if(item.position.z > 40) resetPos(item);
+        });
+    }
+
+    function flashRed() { renderer.setClearColor(0x440000); setTimeout(() => renderer.setClearColor(0x000000), 100); }
+
+    init();
+</script>
+</body>
+</html>
